@@ -62,7 +62,7 @@ Like `dialog`, this tool:
 - writes the selected value(s) to standard error
 - returns a non-zero exit status when cancelled
 
-For `--infobox`, `susedialog` exits immediately with status `0` (non-interactive status message behavior).
+For `--infobox`, `susedialog` renders a non-interactive status box using the provided height/width and exits immediately with status `0`.
 
 That means existing shell snippets such as this should keep working:
 
@@ -74,6 +74,12 @@ CHOICE=$(susedialog --clear \
   1 "One" \
   2 "Two" \
   2>&1 >/dev/tty) || exit
+```
+
+And for non-interactive status updates:
+
+```bash
+susedialog --title "Status" --infobox "Refreshing repositories..." 8 50
 ```
 
 ## Build

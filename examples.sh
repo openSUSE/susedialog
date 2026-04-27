@@ -11,6 +11,11 @@ $DIALOGCMD --msgbox "Hello openSUSE 🚀" 10 40
 echo $?
 
 echo ""
+echo "Infobox demo (non-interactive, exits immediately):"
+$DIALOGCMD --title "Status" --infobox "Refreshing repositories..." 8 50
+echo "INFOBOX_EXIT=$?"
+
+echo ""
 echo "Theme demo: opensuse (debug enabled)"
 SUSEDIALOG_DEBUG_THEME=1 $DIALOGCMD --theme opensuse --msgbox "Theme demo: opensuse" 10 50
 

@@ -1477,6 +1477,108 @@ func (m model) View() tea.View {
 	return v
 }
 
+func renderInfoBox(cfg config) string {
+	p := cfg.Palette
+	if p.GeekoGreen == nil {
+		p = opensuse
+	}
+
+	highContrastTheme := strings.EqualFold(cfg.Theme, "high-contrast")
+	rainbowTheme := strings.EqualFold(cfg.Theme, "rainbow")
+
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(p.ButterflyBlue)
+
+	titleAccentStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(p.PlumPurple)
+
+	backtitleStyle := lipgloss.NewStyle().
+		Foreground(p.GabbroGray)
+
+	textStyle := lipgloss.NewStyle().
+		Foreground(p.BagelBeige)
+
+	boldTextStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(p.ButterflyBlue)
+
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(p.GeekoGreen).
+		Padding(1, 2)
+
+	if highContrastTheme {
+		titleStyle = titleStyle.Foreground(p.TurquoiseTeal).Background(p.MapleMaroon)
+		titleAccentStyle = titleAccentStyle.Foreground(p.BagelBeige).Background(p.MapleMaroon)
+		backtitleStyle = backtitleStyle.Foreground(p.BagelBeige).Background(p.MapleMaroon)
+		textStyle = textStyle.Foreground(p.BagelBeige).Background(p.MapleMaroon)
+		boldTextStyle = boldTextStyle.Foreground(p.YarrowYellow).Background(p.MapleMaroon)
+		boxStyle = boxStyle.Foreground(p.BagelBeige).Background(p.MapleMaroon).Border(lipgloss.ThickBorder()).BorderForeground(p.BagelBeige)
+	}
+
+	bodyWidth := cfg.Width - 6
+	if bodyWidth <= 0 {
+		bodyWidth = 54
+	}
+	bodyWidth = clampInt(bodyWidth, 20, 200)
+
+	bodyHeight := cfg.Height - 4
+	if bodyHeight <= 0 {
+		bodyHeight = 6
+	}
+	bodyHeight = clampInt(bodyHeight, 1, 1000)
+
+	bodyText := normalizeDialogText(cfg.Text, cfg.NoNLExpand)
+	bodyText = wrapText(bodyText, bodyWidth)
+	lines := strings.Split(bodyText, "\n")
+	if len(lines) == 0 {
+		lines = []string{""}
+	}
+
+	if len(lines) > bodyHeight {
+		lines = lines[:bodyHeight]
+		if bodyHeight > 0 {
+			lines[bodyHeight-1] = wrapLine("...", bodyWidth)
+		}
+	}
+
+	bodyText = strings.Join(lines, "\n")
+	bodyText = renderWithBoldMarkers(bodyText, textStyle, boldTextStyle)
+
+	var b strings.Builder
+	if cfg.Backtitle != "" {
+		b.WriteString(backtitleStyle.Render(cfg.Backtitle))
+		b.WriteString("\n")
+	}
+
+	if cfg.Title != "" {
+		title := normalizeDialogText(cfg.Title, cfg.NoNLExpand)
+		b.WriteString(renderWithBoldMarkers(title, titleStyle, titleAccentStyle))
+		b.WriteString("\n")
+		if rainbowTheme {
+			b.WriteString(renderRainbowUnderline(40, p))
+		} else {
+			b.WriteString(lipgloss.NewStyle().Foreground(p.PlumPurple).Bold(true).Render(strings.Repeat("━", 40)))
+		}
+		b.WriteString("\n\n")
+	}
+
+	if rainbowTheme {
+		b.WriteString(renderRainbowFrame(bodyText, p))
+	} else {
+		b.WriteString(boxStyle.Width(bodyWidth).Render(bodyText))
+	}
+
+	out := b.String()
+	if highContrastTheme {
+		out = lipgloss.NewStyle().Foreground(p.BagelBeige).Background(p.MapleMaroon).Render(out)
+	}
+
+	return out
+}
+
 func parseArgs(args []string) (config, error) {
 	cfg := config{OkLabel: "OK", ExitLabel: "Exit", OutputFD: 2, Clear: true}
 	var i int
@@ -1889,6 +1991,7 @@ func main() {
 	}
 
 	if cfg.Mode == modeInfoBox {
+		fmt.Println(renderInfoBox(cfg))
 		os.Exit(0)
 	}
 
