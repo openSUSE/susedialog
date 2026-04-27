@@ -72,7 +72,9 @@ type config struct {
 	Fields      []formField
 	Percent     int
 	Theme       string
+	ThemeToggleKey string
 	Palette     palette
+	Themes      map[string]palette
 }
 
 type palette struct {
@@ -137,7 +139,8 @@ type themeFilePalette struct {
 }
 
 type runtimeConfig struct {
-	Theme string
+	Theme          string
+	ThemeToggleKey string
 }
 
 type model struct {
@@ -161,6 +164,9 @@ func envEnabled(name string) bool {
 }
 
 func newModel(cfg config) model {
+	if strings.TrimSpace(cfg.ThemeToggleKey) == "" {
+		cfg.ThemeToggleKey = "ctrl+t"
+	}
 	m := model{cfg: cfg, debugKeys: envEnabled("SUSEDIALOG_DEBUG_KEYS")}
 
 	if cfg.DefaultItem != "" && (cfg.Mode == modeMenu || cfg.Mode == modeChecklist) {
@@ -509,10 +515,18 @@ func parseRuntimeConfig(path string) runtimeConfig {
 		switch key {
 		case "theme", "susedialog_theme":
 			rc.Theme = strings.ToLower(val)
+		case "theme_toggle_key", "susedialog_theme_toggle_key":
+			rc.ThemeToggleKey = normalizeKeyBinding(val)
 		}
 	}
 
 	return rc
+}
+
+func normalizeKeyBinding(v string) string {
+	v = strings.ToLower(strings.TrimSpace(v))
+	v = strings.ReplaceAll(v, " ", "")
+	return v
 }
 
 func userConfigPath() string {
@@ -547,6 +561,31 @@ func resolveThemeName(cliTheme string) string {
 	}
 
 	return "opensuse"
+}
+
+func resolveThemeToggleKey() string {
+	if envKey := normalizeKeyBinding(os.Getenv("SUSEDIALOG_THEME_TOGGLE_KEY")); envKey != "" {
+		return envKey
+	}
+
+	if userCfg := userConfigPath(); userCfg != "" {
+		if cfg := parseRuntimeConfig(userCfg); cfg.ThemeToggleKey != "" {
+			return cfg.ThemeToggleKey
+		}
+	}
+
+	if cfg := parseRuntimeConfig("/etc/susedialog/config"); cfg.ThemeToggleKey != "" {
+		return cfg.ThemeToggleKey
+	}
+
+	return "ctrl+t"
+}
+
+func nextThemeName(current string) string {
+	if strings.EqualFold(strings.TrimSpace(current), "high-contrast") {
+		return "opensuse"
+	}
+	return "high-contrast"
 }
 
 func resolvePalette(theme string, themes map[string]palette) (string, palette) {
@@ -648,9 +687,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		s := msg.String()
+		s := normalizeKeyBinding(msg.String())
 		if m.debugKeys {
 			_, _ = fmt.Fprintf(os.Stderr, "[susedialog debug] key=%q\n", s)
+		}
+
+		toggleKey := normalizeKeyBinding(m.cfg.ThemeToggleKey)
+		if toggleKey == "" {
+			toggleKey = "ctrl+t"
+		}
+
+		if s == toggleKey {
+			nextTheme := nextThemeName(m.cfg.Theme)
+			m.cfg.Theme, m.cfg.Palette = resolvePalette(nextTheme, m.cfg.Themes)
+			return m, nil
 		}
 
 		switch m.cfg.Mode {
@@ -1713,6 +1763,8 @@ func main() {
 	requestedTheme := cfg.Theme
 	bundledThemes := loadBundledThemes()
 	resolvedThemeName := resolveThemeName(cfg.Theme)
+	cfg.ThemeToggleKey = resolveThemeToggleKey()
+	cfg.Themes = bundledThemes
 	cfg.Theme, cfg.Palette = resolvePalette(resolvedThemeName, bundledThemes)
 
 	if envEnabled("SUSEDIALOG_DEBUG_THEME") {

@@ -179,6 +179,15 @@ Useful for debugging key-handling issues.
 Selects the theme when
 .B --theme
 is not specified.
+.TP
+.B SUSEDIALOG_THEME_TOGGLE_KEY
+Sets the key binding used to toggle between
+.B opensuse
+and
+.B high-contrast
+themes while a dialog is open.
+Default is
+.BR ctrl+t .
 .PP
 Theme resolution order is:
 .B --theme
@@ -190,6 +199,11 @@ environment variable,
 .IR $XDG_CONFIG_HOME/susedialog/config ),
 then
 .IR /etc/susedialog/config .
+.PP
+The toggle shortcut can be set in config files with
+.B theme_toggle_key
+or via
+.BR SUSEDIALOG_THEME_TOGGLE_KEY .
 .SH EXAMPLES
 Display a simple message:
 .PP

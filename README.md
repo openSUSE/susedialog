@@ -116,6 +116,11 @@ Theme selection priority (highest to lowest):
 
 Config files accept either `theme=<name>` or `SUSEDIALOG_THEME=<name>`.
 
+Theme toggle shortcut defaults to `ctrl+t` and can be configured with:
+
+- `SUSEDIALOG_THEME_TOGGLE_KEY` (environment)
+- `theme_toggle_key=<key>` (user/system config)
+
 Bundled themes live in the project directory `themes/`.
 
 At runtime, `susedialog` also checks `themes/` relative to the executing binary location and uses those files as overrides. This allows a `$SCRIPTDIR/themes` style deployment.
