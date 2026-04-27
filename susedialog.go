@@ -72,6 +72,7 @@ type config struct {
 	Fields      []formField
 	Percent     int
 	Theme       string
+	Align       string
 	ThemeToggleKey string
 	Palette     palette
 	Themes      map[string]palette
@@ -153,6 +154,7 @@ type themeFilePalette struct {
 
 type runtimeConfig struct {
 	Theme          string
+	Align          string
 	ThemeToggleKey string
 }
 
@@ -177,6 +179,9 @@ func envEnabled(name string) bool {
 }
 
 func newModel(cfg config) model {
+	if strings.TrimSpace(cfg.Align) == "" {
+		cfg.Align = "topleft"
+	}
 	if strings.TrimSpace(cfg.ThemeToggleKey) == "" {
 		cfg.ThemeToggleKey = "ctrl+t"
 	}
@@ -602,12 +607,30 @@ func parseRuntimeConfig(path string) runtimeConfig {
 		switch key {
 		case "theme", "susedialog_theme":
 			rc.Theme = strings.ToLower(val)
+		case "align", "susedialog_align":
+			rc.Align = normalizeAlignment(val)
 		case "theme_toggle_key", "susedialog_theme_toggle_key":
 			rc.ThemeToggleKey = normalizeKeyBinding(val)
 		}
 	}
 
 	return rc
+}
+
+func normalizeAlignment(v string) string {
+	v = strings.ToLower(strings.TrimSpace(v))
+	v = strings.ReplaceAll(v, "_", "")
+	v = strings.ReplaceAll(v, "-", "")
+	v = strings.ReplaceAll(v, " ", "")
+
+	switch v {
+	case "", "topleft", "left", "top", "start":
+		return "topleft"
+	case "center", "centred", "middle":
+		return "center"
+	default:
+		return "topleft"
+	}
 }
 
 func normalizeKeyBinding(v string) string {
@@ -650,6 +673,32 @@ func resolveThemeName(cliTheme string) string {
 	return "opensuse"
 }
 
+func resolveAlignment(cliAlign string) string {
+	if v := normalizeAlignment(cliAlign); v != "topleft" || strings.TrimSpace(cliAlign) == "" {
+		if strings.TrimSpace(cliAlign) != "" {
+			return v
+		}
+	}
+
+	if envAlign := normalizeAlignment(os.Getenv("SUSEDIALOG_ALIGN")); envAlign != "topleft" || strings.TrimSpace(os.Getenv("SUSEDIALOG_ALIGN")) == "topleft" {
+		if strings.TrimSpace(os.Getenv("SUSEDIALOG_ALIGN")) != "" {
+			return envAlign
+		}
+	}
+
+	if userCfg := userConfigPath(); userCfg != "" {
+		if cfg := parseRuntimeConfig(userCfg); cfg.Align != "" {
+			return normalizeAlignment(cfg.Align)
+		}
+	}
+
+	if cfg := parseRuntimeConfig("/etc/susedialog/config"); cfg.Align != "" {
+		return normalizeAlignment(cfg.Align)
+	}
+
+	return "topleft"
+}
+
 func resolveThemeToggleKey() string {
 	if envKey := normalizeKeyBinding(os.Getenv("SUSEDIALOG_THEME_TOGGLE_KEY")); envKey != "" {
 		return envKey
@@ -681,6 +730,16 @@ func resolvePalette(theme string, themes map[string]palette) (string, palette) {
 		return name, p
 	}
 	return "opensuse", opensuse
+}
+
+func placeAligned(out, align string, termWidth, termHeight int) string {
+	if normalizeAlignment(align) != "center" {
+		return out
+	}
+	if termWidth <= 0 || termHeight <= 0 {
+		return out
+	}
+	return lipgloss.Place(termWidth, termHeight, lipgloss.Center, lipgloss.Center, out)
 }
 
 func clampInt(v, min, max int) int {
@@ -1473,11 +1532,13 @@ func (m model) View() tea.View {
 		out = lipgloss.NewStyle().Foreground(p.BagelBeige).Background(p.MapleMaroon).Render(out)
 	}
 
+	out = placeAligned(out, m.cfg.Align, m.width, m.height)
+
 	v := tea.NewView(out)
 	return v
 }
 
-func renderInfoBox(cfg config) string {
+func renderInfoBox(cfg config, termWidth, termHeight int) string {
 	p := cfg.Palette
 	if p.GeekoGreen == nil {
 		p = opensuse
@@ -1575,6 +1636,7 @@ func renderInfoBox(cfg config) string {
 	if highContrastTheme {
 		out = lipgloss.NewStyle().Foreground(p.BagelBeige).Background(p.MapleMaroon).Render(out)
 	}
+	out = placeAligned(out, cfg.Align, termWidth, termHeight)
 
 	return out
 }
@@ -1662,6 +1724,13 @@ func parseArgs(args []string) (config, error) {
 			}
 			cfg.Theme = args[i+1]
 			i += 2
+
+			case "--align":
+				if i+1 >= len(args) {
+					return cfg, errors.New("missing value for --align")
+				}
+				cfg.Align = normalizeAlignment(args[i+1])
+				i += 2
 
 		case "--msgbox":
 			if i+3 >= len(args) {
@@ -1925,7 +1994,7 @@ func printHelp() {
 	fmt.Println("Special options:")
 	fmt.Println("  [--help] [--version]")
 	fmt.Println("Common options:")
-	fmt.Println("  [--clear] [--title <title>] [--backtitle <backtitle>] [--ok-label <str>] [--cancel-label <str>] [--exit-label <str>] [--output-fd <fd>] [--default-item <str>] [--no-nl-expand] [--no-collapse] [--insecure] [--theme <name>]")
+	fmt.Println("  [--clear] [--title <title>] [--backtitle <backtitle>] [--ok-label <str>] [--cancel-label <str>] [--exit-label <str>] [--output-fd <fd>] [--default-item <str>] [--no-nl-expand] [--no-collapse] [--insecure] [--theme <name>] [--align <topleft|center>]")
 	fmt.Println("Box options:")
 	fmt.Println("  --msgbox     <text> <height> <width>")
 	fmt.Println("  --infobox    <text> <height> <width>")
@@ -1966,6 +2035,7 @@ func main() {
 	requestedTheme := cfg.Theme
 	bundledThemes := loadBundledThemes()
 	resolvedThemeName := resolveThemeName(cfg.Theme)
+	cfg.Align = resolveAlignment(cfg.Align)
 	cfg.ThemeToggleKey = resolveThemeToggleKey()
 	cfg.Themes = bundledThemes
 	cfg.Theme, cfg.Palette = resolvePalette(resolvedThemeName, bundledThemes)
@@ -1991,7 +2061,9 @@ func main() {
 	}
 
 	if cfg.Mode == modeInfoBox {
-		fmt.Println(renderInfoBox(cfg))
+		termWidth, _ := strconv.Atoi(strings.TrimSpace(os.Getenv("COLUMNS")))
+		termHeight, _ := strconv.Atoi(strings.TrimSpace(os.Getenv("LINES")))
+		fmt.Println(renderInfoBox(cfg, termWidth, termHeight))
 		os.Exit(0)
 	}
 

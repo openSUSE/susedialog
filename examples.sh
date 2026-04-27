@@ -16,6 +16,14 @@ $DIALOGCMD --title "Status" --infobox "Refreshing repositories..." 8 50
 echo "INFOBOX_EXIT=$?"
 
 echo ""
+echo "Alignment demo: topleft (default flow)"
+$DIALOGCMD --align topleft --title "Alignment" --msgbox "Top-left aligned dialog" 10 50
+
+echo ""
+echo "Alignment demo: center (modal style)"
+$DIALOGCMD --align center --title "Alignment" --msgbox "Centered dialog" 10 50
+
+echo ""
 echo "Theme demo: opensuse (debug enabled)"
 SUSEDIALOG_DEBUG_THEME=1 $DIALOGCMD --theme opensuse --msgbox "Theme demo: opensuse" 10 50
 

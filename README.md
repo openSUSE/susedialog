@@ -47,6 +47,7 @@ It is intentionally narrow: the initial target is openSUSE system tooling that c
 - `--output-fd`
 - `--default-item`
 - `--theme`
+- `--align`
 - `--no-nl-expand`
 - `--no-collapse` (accepted for compatibility)
 - `--insecure`
@@ -131,6 +132,12 @@ Theme toggle shortcut defaults to `ctrl+t` and can be configured with:
 
 - `SUSEDIALOG_THEME_TOGGLE_KEY` (environment)
 - `theme_toggle_key=<key>` (user/system config)
+
+Dialog alignment defaults to `topleft` and can be configured with:
+
+- CLI option: `--align <topleft|center>`
+- `SUSEDIALOG_ALIGN` (environment)
+- `align=<topleft|center>` (user/system config)
 
 Bundled themes live in the project directory `themes/`.
 

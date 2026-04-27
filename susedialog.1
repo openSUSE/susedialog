@@ -143,6 +143,15 @@ and
 and
 .BR rainbow .
 .TP
+.BI "--align " mode
+Set dialog alignment.
+Supported values are
+.B topleft
+and
+.BR center .
+Default is
+.BR topleft .
+.TP
 .B --clear
 Clear the screen before rendering the next dialog.
 This is the default behavior; the flag is accepted for
@@ -182,6 +191,15 @@ Selects the theme when
 .B --theme
 is not specified.
 .TP
+.B SUSEDIALOG_ALIGN
+Sets dialog alignment when
+.B --align
+is not specified.
+Supported values are
+.B topleft
+and
+.BR center .
+.TP
 .B SUSEDIALOG_THEME_TOGGLE_KEY
 Sets the key binding used to toggle between
 .B opensuse
@@ -206,6 +224,11 @@ The toggle shortcut can be set in config files with
 .B theme_toggle_key
 or via
 .BR SUSEDIALOG_THEME_TOGGLE_KEY .
+.PP
+Alignment can be set in config files with
+.B align
+or via
+.BR SUSEDIALOG_ALIGN .
 .SH EXAMPLES
 Display a simple message:
 .PP
