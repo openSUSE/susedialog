@@ -63,6 +63,12 @@ Like `dialog`, this tool:
 - writes the selected value(s) to standard error
 - returns a non-zero exit status when cancelled
 
+Keyboard interrupt behavior matches `dialog` expectations:
+
+- `Esc` follows the regular cancel path (exit status `1`)
+- `Ctrl+C` is treated as an interrupt and exits with status `130`
+- `Ctrl+C` propagation uses `SIGINT` process-group semantics so wrapper applications can react like with original `dialog`
+
 For `--infobox`, `susedialog` renders a non-interactive status box using the provided height/width and exits immediately with status `0`.
 
 That means existing shell snippets such as this should keep working:
