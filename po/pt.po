@@ -1,0 +1,136 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: susedialog\n"
+"Report-Msgid-Bugs-To: https://github.com/openSUSE/susedialog/issues\n"
+"POT-Creation-Date: 2026-05-01 00:00+0000\n"
+"PO-Revision-Date: 2026-05-01 00:00+0000\n"
+"Last-Translator: openSUSE contributors\n"
+"Language-Team: Portuguese\n"
+"Language: pt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "susedialog version %s\\n"
+msgstr "versão do susedialog %s\\n"
+
+msgid "susedialog (openSUSE Dialog) version %s\\n"
+msgstr "versão do susedialog (openSUSE Dialog) %s\\n"
+
+msgid "Copyright 2026 openSUSE"
+msgstr "Copyright 2026 openSUSE"
+
+msgid "This is free software; see the source for copying conditions.  There is NO"
+msgstr "Este é software livre; veja o código-fonte para as condições de cópia. NÃO existe QUALQUER"
+
+msgid "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+msgstr "garantia; nem mesmo de COMERCIABILIDADE ou ADEQUAÇÃO A UMA FINALIDADE ESPECÍFICA."
+
+msgid "* Display dialog-like boxes from shell scripts *"
+msgstr "* Mostra caixas de diálogo a partir de scripts shell *"
+
+msgid "Usage: %s <options>\\n"
+msgstr "Utilização: %s <opções>\\n"
+
+msgid "where options are common options, followed by one box option"
+msgstr "onde as opções são opções comuns, seguidas de uma opção de caixa"
+
+msgid "Special options:"
+msgstr "Opções especiais:"
+
+msgid "  [--help] [--version]"
+msgstr "  [--help] [--version]"
+
+msgid "Common options:"
+msgstr "Opções comuns:"
+
+msgid "  [--clear] [--title <title>] [--backtitle <backtitle>] [--ok-label <str>] [--cancel-label <str>] [--yes-label <str>] [--no-label <str>] [--exit-label <str>] [--output-fd <fd>] [--default-item <str>] [--no-nl-expand] [--no-collapse] [--insecure] [--theme <name>] [--align <topleft|center>]"
+msgstr "  [--clear] [--title <title>] [--backtitle <backtitle>] [--ok-label <str>] [--cancel-label <str>] [--yes-label <str>] [--no-label <str>] [--exit-label <str>] [--output-fd <fd>] [--default-item <str>] [--no-nl-expand] [--no-collapse] [--insecure] [--theme <name>] [--align <topleft|center>]"
+
+msgid "Box options:"
+msgstr "Opções de caixa:"
+
+msgid "  --msgbox     <text> <height> <width>"
+msgstr "  --msgbox     <text> <height> <width>"
+
+msgid "  --infobox    <text> <height> <width>"
+msgstr "  --infobox    <text> <height> <width>"
+
+msgid "  --textbox    <file> <height> <width>"
+msgstr "  --textbox    <file> <height> <width>"
+
+msgid "  --yesno      <text> <height> <width>"
+msgstr "  --yesno      <text> <height> <width>"
+
+msgid "  --gauge      <text> <height> <width> [<percent>]"
+msgstr "  --gauge      <text> <height> <width> [<percent>]"
+
+msgid "  --inputbox   <text> <height> <width>"
+msgstr "  --inputbox   <text> <height> <width>"
+
+msgid "  --passwordbox <text> <height> <width>"
+msgstr "  --passwordbox <text> <height> <width>"
+
+msgid "  --mixedform  <text> <height> <width> <form-height> <label1> <l_y1> <l_x1> <item1> <i_y1> <i_x1> <flen1> <ilen1> <itype1>..."
+msgstr "  --mixedform  <text> <height> <width> <form-height> <label1> <l_y1> <l_x1> <item1> <i_y1> <i_x1> <flen1> <ilen1> <itype1>..."
+
+msgid "  --menu       <text> <height> <width> <menu-height> <tag1> <item1>..."
+msgstr "  --menu       <text> <height> <width> <menu-height> <tag1> <item1>..."
+
+msgid "  --checklist  <text> <height> <width> <list-height> <tag1> <item1> <status1>..."
+msgstr "  --checklist  <text> <height> <width> <list-height> <tag1> <item1> <status1>..."
+
+msgid "  --radiolist  <text> <height> <width> <list-height> <tag1> <item1> <status1>..."
+msgstr "  --radiolist  <text> <height> <width> <list-height> <tag1> <item1> <status1>..."
+
+msgid "  --form       <text> <height> <width> <form-height> <label1> <l_y1> <l_x1> <item1> <i_y1> <i_x1> <flen1> <ilen1>..."
+msgstr "  --form       <text> <height> <width> <form-height> <label1> <l_y1> <l_x1> <item1> <i_y1> <i_x1> <flen1> <ilen1>..."
+
+msgid "  --progress   <text> <height> <width> [<percent>]"
+msgstr "  --progress   <text> <height> <width> [<percent>]"
+
+msgid "Enter confirms · Esc cancels"
+msgstr "Enter confirma · Esc cancela"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "↑ back · Enter confirm · Esc cancel"
+msgstr "↑ voltar · Enter confirmar · Esc cancelar"
+
+msgid "↑/↓ scroll · End/↓ at bottom → button · Esc cancel"
+msgstr "↑/↓ deslizar · End/↓ no fundo → botão · Esc cancelar"
+
+msgid "Yes"
+msgstr "Sim"
+
+msgid "No"
+msgstr "Não"
+
+msgid "←/→ move · Enter confirm · Esc cancel"
+msgstr "←/→ mover · Enter confirmar · Esc cancelar"
+
+msgid "↑/↓ move · Enter select · Esc cancel"
+msgstr "↑/↓ mover · Enter selecionar · Esc cancelar"
+
+msgid "↑/↓ move · Space toggle · Enter confirm · Esc cancel"
+msgstr "↑/↓ mover · Espaço alternar · Enter confirmar · Esc cancelar"
+
+msgid "↑/↓ move · Space select · Enter confirm · Esc cancel"
+msgstr "↑/↓ mover · Espaço selecionar · Enter confirmar · Esc cancelar"
+
+msgid "Tab moves focus · Enter confirm · Esc cancel"
+msgstr "Tab muda o foco · Enter confirmar · Esc cancelar"
+
+msgid "Esc cancels"
+msgstr "Esc cancela"
+
+msgid "Unsupported mode"
+msgstr "Modo não suportado"
+
+msgid "%s Accessibility On/Off"
+msgstr "%s Acessibilidade Ligada/Desligada"
+
+msgid "Exit"
+msgstr "Sair"

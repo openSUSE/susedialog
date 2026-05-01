@@ -35,6 +35,23 @@ if [ ! -f "$DIALOGCMD" ]; then
   go build -o "$DIALOGCMD" . || exit 1
 fi
 
+po_count=0
+pot_count=0
+if [ -d "po" ]; then
+  shopt -s nullglob
+  po_files=(po/*.po)
+  pot_files=(po/*.pot)
+  shopt -u nullglob
+  po_count=${#po_files[@]}
+  pot_count=${#pot_files[@]}
+fi
+
+supported_languages=$((pot_count + po_count))
+if [ "$supported_languages" -eq 0 ]; then
+  # Source strings are English, so at least one language is always available.
+  supported_languages=1
+fi
+
 cat > "$TEXTBOX_FILE" <<'EOF'
 This is a textbox demo.
 
@@ -67,6 +84,12 @@ print_section "Themes"
 SUSEDIALOG_DEBUG_THEME=1 "$DIALOGCMD" --theme opensuse --msgbox "Theme demo: opensuse" 10 50
 SUSEDIALOG_DEBUG_THEME=1 "$DIALOGCMD" --theme high-contrast --msgbox "Theme demo: high-contrast" 10 50
 SUSEDIALOG_DEBUG_THEME=1 "$DIALOGCMD" --theme rainbow --msgbox "Theme demo: rainbow" 10 50
+
+print_section "Localization (Czech Locale)"
+LANG=cs_CZ.UTF-8 LANGUAGE=cs_CZ "$DIALOGCMD" \
+  --title "Localization" \
+  --msgbox "We support ${supported_languages} languages." 10 50
+echo "LOCALIZATION_EXIT=$?"
 
 print_section "Yes/No"
 "$DIALOGCMD" \

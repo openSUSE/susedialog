@@ -106,6 +106,21 @@ To embed a commit hash for `--version` output:
 go build -ldflags "-X main.gitCommit=$(git rev-parse --short HEAD)" .
 ```
 
+## Localization
+
+`susedialog` now includes gettext-style localization backed by PO files.
+
+- Template catalog: `po/en.pot`
+
+At runtime, locale selection follows `LC_ALL`, `LC_MESSAGES`, `LANGUAGE`, then `LANG`.
+`susedialog` tries the full locale first (for example `cs_CZ`), then the language
+code (`cs`), and finally falls back to source English `msgid` strings.
+
+This layout is compatible with Weblate workflows based on `po/*.po` and a tracked
+POT template.
+
+You can contribute translations at <https://l10n.opensuse.org/projects/susedialog/>.
+
 ## Notes
 
 This is not meant to be a full clone of `dialog`. The goal is to provide a polished openSUSE-branded terminal UI for the specific widgets openSUSE tools actually use.

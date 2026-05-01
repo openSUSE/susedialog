@@ -16,6 +16,7 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	lipgloss "charm.land/lipgloss/v2"
+	"github.com/leonelquinteros/gotext"
 )
 
 type mode int
@@ -138,6 +139,11 @@ var rainbow = palette{
 //go:embed themes/*.json
 var themeFS embed.FS
 
+//go:embed po/*.po
+var localeFS embed.FS
+
+var activePO *gotext.Po
+
 type themeFile struct {
 	Name    string           `json:"name"`
 	Palette themeFilePalette `json:"palette"`
@@ -181,6 +187,82 @@ type model struct {
 func envEnabled(name string) bool {
 	v := strings.ToLower(strings.TrimSpace(os.Getenv(name)))
 	return v == "1" || v == "true" || v == "yes" || v == "on"
+}
+
+func tr(msgid string, args ...any) string {
+	translated := msgid
+	if activePO != nil {
+		if v := activePO.Get(msgid); v != "" {
+			translated = v
+		}
+	}
+	if len(args) == 0 {
+		return translated
+	}
+	return fmt.Sprintf(translated, args...)
+}
+
+func detectLocale() string {
+	candidates := []string{
+		strings.TrimSpace(os.Getenv("LC_ALL")),
+		strings.TrimSpace(os.Getenv("LC_MESSAGES")),
+		strings.TrimSpace(os.Getenv("LANGUAGE")),
+		strings.TrimSpace(os.Getenv("LANG")),
+	}
+
+	for _, c := range candidates {
+		if c == "" {
+			continue
+		}
+		for _, token := range strings.Split(c, ":") {
+			token = strings.TrimSpace(token)
+			if token == "" {
+				continue
+			}
+			token = strings.Split(token, ".")[0]
+			token = strings.ReplaceAll(token, "-", "_")
+			return token
+		}
+	}
+
+	return "en"
+}
+
+func localeCandidates(locale string) []string {
+	seen := map[string]struct{}{}
+	out := make([]string, 0, 3)
+	add := func(v string) {
+		v = strings.TrimSpace(v)
+		if v == "" {
+			return
+		}
+		if _, ok := seen[v]; ok {
+			return
+		}
+		seen[v] = struct{}{}
+		out = append(out, v)
+	}
+
+	add(locale)
+	if i := strings.Index(locale, "_"); i > 0 {
+		add(locale[:i])
+	}
+	add("en")
+	return out
+}
+
+func initI18n() {
+	locale := detectLocale()
+	for _, cand := range localeCandidates(locale) {
+		data, err := localeFS.ReadFile(filepath.Join("po", cand+".po"))
+		if err != nil {
+			continue
+		}
+		po := gotext.NewPo()
+		po.Parse(data)
+		activePO = po
+		return
+	}
 }
 
 func newModel(cfg config) model {
@@ -1318,7 +1400,7 @@ func (m model) View() tea.View {
 		b.WriteString("\n\n")
 		b.WriteString(focusedStyle.Render(fmt.Sprintf("[ %s ]", m.cfg.OkLabel)))
 		b.WriteString("\n")
-		b.WriteString(helpStyle.Render("Enter confirms · Esc cancels"))
+		b.WriteString(helpStyle.Render(tr("Enter confirms · Esc cancels")))
 
 	case modeInputBox:
 		b.WriteString(renderWithBoldMarkers(displayText, textStyle, boldTextStyle))
@@ -1329,11 +1411,11 @@ func (m model) View() tea.View {
 		b.WriteString("\n\n")
 		okLabel := m.cfg.OkLabel
 		if okLabel == "" {
-			okLabel = "OK"
+			okLabel = tr("OK")
 		}
 		b.WriteString(focusedStyle.Render(fmt.Sprintf("[ %s ]", okLabel)))
 		b.WriteString("\n")
-		b.WriteString(helpStyle.Render("Enter confirms · Esc cancels"))
+		b.WriteString(helpStyle.Render(tr("Enter confirms · Esc cancels")))
 
 	case modePasswordBox:
 		b.WriteString(renderWithBoldMarkers(displayText, textStyle, boldTextStyle))
@@ -1344,11 +1426,11 @@ func (m model) View() tea.View {
 		b.WriteString("\n\n")
 		okLabel := m.cfg.OkLabel
 		if okLabel == "" {
-			okLabel = "OK"
+			okLabel = tr("OK")
 		}
 		b.WriteString(focusedStyle.Render(fmt.Sprintf("[ %s ]", okLabel)))
 		b.WriteString("\n")
-		b.WriteString(helpStyle.Render("Enter confirms · Esc cancels"))
+		b.WriteString(helpStyle.Render(tr("Enter confirms · Esc cancels")))
 
 	case modeTextBox:
 		lines := strings.Split(displayText, "\n")
@@ -1408,7 +1490,7 @@ func (m model) View() tea.View {
 		// Show button with exit label
 		exitLabel := m.cfg.ExitLabel
 		if exitLabel == "" {
-			exitLabel = "OK"
+			exitLabel = tr("OK")
 		}
 
 		buttonStyle := mutedStyle
@@ -1420,9 +1502,9 @@ func (m model) View() tea.View {
 
 		// Help text shows focus context
 		if m.textboxButtonFocused {
-			b.WriteString(helpStyle.Render("↑ back · Enter confirm · Esc cancel"))
+			b.WriteString(helpStyle.Render(tr("↑ back · Enter confirm · Esc cancel")))
 		} else {
-			b.WriteString(helpStyle.Render("↑/↓ scroll · End/↓ at bottom → button · Esc cancel"))
+			b.WriteString(helpStyle.Render(tr("↑/↓ scroll · End/↓ at bottom → button · Esc cancel")))
 		}
 
 	case modeYesNo:
@@ -1444,17 +1526,17 @@ func (m model) View() tea.View {
 
 		yesLabel := m.cfg.YesLabel
 		if yesLabel == "" {
-			yesLabel = "Yes"
+			yesLabel = tr("Yes")
 		}
 		noLabel := m.cfg.NoLabel
 		if noLabel == "" {
-			noLabel = "No"
+			noLabel = tr("No")
 		}
 
 		buttons := fmt.Sprintf("%s   %s", yesStyle.Render(fmt.Sprintf("[ %s ]", yesLabel)), noStyle.Render(fmt.Sprintf("[ %s ]", noLabel)))
 		b.WriteString(buttons)
 		b.WriteString("\n\n")
-		b.WriteString(helpStyle.Render("←/→ move · Enter confirm · Esc cancel"))
+		b.WriteString(helpStyle.Render(tr("←/→ move · Enter confirm · Esc cancel")))
 
 	case modeMenu:
 		b.WriteString(renderWithBoldMarkers(displayText, textStyle, boldTextStyle))
@@ -1493,7 +1575,7 @@ func (m model) View() tea.View {
 		}
 
 		b.WriteString("\n")
-		b.WriteString(helpStyle.Render("↑/↓ move · Enter select · Esc cancel"))
+		b.WriteString(helpStyle.Render(tr("↑/↓ move · Enter select · Esc cancel")))
 
 	case modeChecklist:
 		b.WriteString(renderWithBoldMarkers(displayText, textStyle, boldTextStyle))
@@ -1546,7 +1628,7 @@ func (m model) View() tea.View {
 		}
 
 		b.WriteString("\n")
-		b.WriteString(helpStyle.Render("↑/↓ move · Space toggle · Enter confirm · Esc cancel"))
+		b.WriteString(helpStyle.Render(tr("↑/↓ move · Space toggle · Enter confirm · Esc cancel")))
 
 	case modeRadiolist:
 		b.WriteString(renderWithBoldMarkers(displayText, textStyle, boldTextStyle))
@@ -1596,7 +1678,7 @@ func (m model) View() tea.View {
 		}
 
 		b.WriteString("\n")
-		b.WriteString(helpStyle.Render("↑/↓ move · Space select · Enter confirm · Esc cancel"))
+		b.WriteString(helpStyle.Render(tr("↑/↓ move · Space select · Enter confirm · Esc cancel")))
 
 	case modeForm:
 		b.WriteString(renderWithBoldMarkers(displayText, textStyle, boldTextStyle))
@@ -1630,7 +1712,7 @@ func (m model) View() tea.View {
 		b.WriteString("\n")
 		b.WriteString(focusedStyle.Render(fmt.Sprintf("[ %s ]", m.cfg.OkLabel)))
 		b.WriteString("\n")
-		b.WriteString(helpStyle.Render("Tab moves focus · Enter confirm · Esc cancel"))
+		b.WriteString(helpStyle.Render(tr("Tab moves focus · Enter confirm · Esc cancel")))
 
 	case modeProgress:
 		b.WriteString(renderWithBoldMarkers(displayText, focusedStyle, boldTextStyle))
@@ -1706,10 +1788,10 @@ func (m model) View() tea.View {
 		line := fmt.Sprintf("%s %3d%%  %s", bar.String(), progressPercent, spin)
 		b.WriteString(progressPanelStyle.Render(line))
 		b.WriteString("\n")
-		b.WriteString(helpStyle.Render("Esc cancels"))
+		b.WriteString(helpStyle.Render(tr("Esc cancels")))
 
 	default:
-		b.WriteString(warningStyle.Render("Unsupported mode"))
+		b.WriteString(warningStyle.Render(tr("Unsupported mode")))
 	}
 
 	toggleKey := m.cfg.ThemeToggleKey
@@ -1717,7 +1799,7 @@ func (m model) View() tea.View {
 		toggleKey = "ctrl+t"
 	}
 	b.WriteString("\n")
-	b.WriteString(mutedStyle.Render(fmt.Sprintf("%s Accessibility On/Off", formatKeyBindingLabel(toggleKey))))
+	b.WriteString(mutedStyle.Render(fmt.Sprintf(tr("%s Accessibility On/Off"), formatKeyBindingLabel(toggleKey))))
 
 	out := b.String()
 	if highContrastTheme {
@@ -1834,7 +1916,7 @@ func renderInfoBox(cfg config, termWidth, termHeight int) string {
 }
 
 func parseArgs(args []string) (config, error) {
-	cfg := config{OkLabel: "OK", ExitLabel: "Exit", OutputFD: 2, Clear: true}
+	cfg := config{OkLabel: tr("OK"), ExitLabel: tr("Exit"), OutputFD: 2, Clear: true}
 	var i int
 
 	for i < len(args) {
@@ -2247,43 +2329,45 @@ func propagateInterruptToProcessGroup() {
 }
 
 func printVersion() {
-	fmt.Printf("susedialog version %s\n", gitCommit)
+	fmt.Printf(tr("susedialog version %s\n"), gitCommit)
 }
 
 func printHelp() {
 	name := filepath.Base(os.Args[0])
 
-	fmt.Printf("susedialog (openSUSE Dialog) version %s\n", gitCommit)
-	fmt.Println("Copyright 2026 openSUSE")
-	fmt.Println("This is free software; see the source for copying conditions.  There is NO")
-	fmt.Println("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.")
+	fmt.Printf(tr("susedialog (openSUSE Dialog) version %s\n"), gitCommit)
+	fmt.Println(tr("Copyright 2026 openSUSE"))
+	fmt.Println(tr("This is free software; see the source for copying conditions.  There is NO"))
+	fmt.Println(tr("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."))
 	fmt.Println()
-	fmt.Println("* Display dialog-like boxes from shell scripts *")
+	fmt.Println(tr("* Display dialog-like boxes from shell scripts *"))
 	fmt.Println()
-	fmt.Printf("Usage: %s <options>\n", name)
-	fmt.Println("where options are common options, followed by one box option")
+	fmt.Printf(tr("Usage: %s <options>\n"), name)
+	fmt.Println(tr("where options are common options, followed by one box option"))
 	fmt.Println()
-	fmt.Println("Special options:")
-	fmt.Println("  [--help] [--version]")
-	fmt.Println("Common options:")
-	fmt.Println("  [--clear] [--title <title>] [--backtitle <backtitle>] [--ok-label <str>] [--cancel-label <str>] [--yes-label <str>] [--no-label <str>] [--exit-label <str>] [--output-fd <fd>] [--default-item <str>] [--no-nl-expand] [--no-collapse] [--insecure] [--theme <name>] [--align <topleft|center>]")
-	fmt.Println("Box options:")
-	fmt.Println("  --msgbox     <text> <height> <width>")
-	fmt.Println("  --infobox    <text> <height> <width>")
-	fmt.Println("  --textbox    <file> <height> <width>")
-	fmt.Println("  --yesno      <text> <height> <width>")
-	fmt.Println("  --gauge      <text> <height> <width> [<percent>]")
-	fmt.Println("  --inputbox   <text> <height> <width>")
-	fmt.Println("  --passwordbox <text> <height> <width>")
-	fmt.Println("  --mixedform  <text> <height> <width> <form-height> <label1> <l_y1> <l_x1> <item1> <i_y1> <i_x1> <flen1> <ilen1> <itype1>...")
-	fmt.Println("  --menu       <text> <height> <width> <menu-height> <tag1> <item1>...")
-	fmt.Println("  --checklist  <text> <height> <width> <list-height> <tag1> <item1> <status1>...")
-	fmt.Println("  --radiolist  <text> <height> <width> <list-height> <tag1> <item1> <status1>...")
-	fmt.Println("  --form       <text> <height> <width> <form-height> <label1> <l_y1> <l_x1> <item1> <i_y1> <i_x1> <flen1> <ilen1>...")
-	fmt.Println("  --progress   <text> <height> <width> [<percent>]")
+	fmt.Println(tr("Special options:"))
+	fmt.Println(tr("  [--help] [--version]"))
+	fmt.Println(tr("Common options:"))
+	fmt.Println(tr("  [--clear] [--title <title>] [--backtitle <backtitle>] [--ok-label <str>] [--cancel-label <str>] [--yes-label <str>] [--no-label <str>] [--exit-label <str>] [--output-fd <fd>] [--default-item <str>] [--no-nl-expand] [--no-collapse] [--insecure] [--theme <name>] [--align <topleft|center>]"))
+	fmt.Println(tr("Box options:"))
+	fmt.Println(tr("  --msgbox     <text> <height> <width>"))
+	fmt.Println(tr("  --infobox    <text> <height> <width>"))
+	fmt.Println(tr("  --textbox    <file> <height> <width>"))
+	fmt.Println(tr("  --yesno      <text> <height> <width>"))
+	fmt.Println(tr("  --gauge      <text> <height> <width> [<percent>]"))
+	fmt.Println(tr("  --inputbox   <text> <height> <width>"))
+	fmt.Println(tr("  --passwordbox <text> <height> <width>"))
+	fmt.Println(tr("  --mixedform  <text> <height> <width> <form-height> <label1> <l_y1> <l_x1> <item1> <i_y1> <i_x1> <flen1> <ilen1> <itype1>..."))
+	fmt.Println(tr("  --menu       <text> <height> <width> <menu-height> <tag1> <item1>..."))
+	fmt.Println(tr("  --checklist  <text> <height> <width> <list-height> <tag1> <item1> <status1>..."))
+	fmt.Println(tr("  --radiolist  <text> <height> <width> <list-height> <tag1> <item1> <status1>..."))
+	fmt.Println(tr("  --form       <text> <height> <width> <form-height> <label1> <l_y1> <l_x1> <item1> <i_y1> <i_x1> <flen1> <ilen1>..."))
+	fmt.Println(tr("  --progress   <text> <height> <width> [<percent>]"))
 }
 
 func main() {
+	initI18n()
+
 	if len(os.Args) == 1 {
 		printHelp()
 		os.Exit(0)
