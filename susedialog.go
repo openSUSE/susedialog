@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"charm.land/bubbles/v2/textinput"
@@ -164,6 +165,7 @@ type model struct {
 	choice               int
 	quitting             bool
 	cancelled            bool
+	interrupted          bool
 	debugKeys            bool
 	width                int
 	height               int
@@ -927,13 +929,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		if s == "ctrl+c" {
+			m.interrupted = true
+			m.quitting = true
+			return m, tea.Quit
+		}
+
 		switch m.cfg.Mode {
 		case modeMsgBox:
 			switch s {
 			case "enter":
 				m.quitting = true
 				return m, tea.Quit
-			case "esc", "q", "ctrl+c":
+			case "esc", "q":
 				m.cancelled = true
 				m.quitting = true
 				return m, tea.Quit
@@ -944,7 +952,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				m.quitting = true
 				return m, tea.Quit
-			case "esc", "q", "ctrl+c":
+			case "esc", "q":
 				m.cancelled = true
 				m.quitting = true
 				return m, tea.Quit
@@ -1012,7 +1020,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// Enter always activates button
 				m.quitting = true
 				return m, tea.Quit
-			case "esc", "q", "ctrl+c":
+			case "esc", "q":
 				m.quitting = true
 				m.cancelled = true
 				return m, tea.Quit
@@ -1035,7 +1043,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				m.quitting = true
 				return m, tea.Quit
-			case "esc", "q", "ctrl+c":
+			case "esc", "q":
 				m.cancelled = true
 				m.quitting = true
 				return m, tea.Quit
@@ -1054,7 +1062,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				m.quitting = true
 				return m, tea.Quit
-			case "esc", "q", "ctrl+c":
+			case "esc", "q":
 				m.cancelled = true
 				m.quitting = true
 				return m, tea.Quit
@@ -1077,7 +1085,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				m.quitting = true
 				return m, tea.Quit
-			case "esc", "q", "ctrl+c":
+			case "esc", "q":
 				m.cancelled = true
 				m.quitting = true
 				return m, tea.Quit
@@ -1112,7 +1120,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.quitting = true
 				return m, tea.Quit
 
-			case "esc", "q", "ctrl+c":
+			case "esc", "q":
 				m.cancelled = true
 				m.quitting = true
 				return m, tea.Quit
@@ -1128,7 +1136,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case modeProgress:
 			switch s {
-			case "esc", "q", "ctrl+c":
+			case "esc", "q":
 				m.cancelled = true
 				m.quitting = true
 				return m, tea.Quit
@@ -1994,6 +2002,10 @@ func parseArgs(args []string) (config, error) {
 }
 
 func emitResult(m model) int {
+	if m.interrupted {
+		return 130
+	}
+
 	if m.cancelled {
 		return 1
 	}
@@ -2057,6 +2069,16 @@ func emitResult(m model) int {
 	default:
 		return 1
 	}
+}
+
+func propagateInterruptToProcessGroup() {
+	pgid, err := syscall.Getpgid(0)
+	if err != nil || pgid <= 0 {
+		return
+	}
+
+	// Negative PID targets the whole process group, which matches terminal Ctrl+C.
+	_ = syscall.Kill(-pgid, syscall.SIGINT)
 }
 
 func printVersion() {
@@ -2159,6 +2181,11 @@ func main() {
 		os.Exit(2)
 	}
 
-	exitCode := emitResult(finalModel.(model))
+	mdl := finalModel.(model)
+	if mdl.interrupted {
+		propagateInterruptToProcessGroup()
+	}
+
+	exitCode := emitResult(mdl)
 	os.Exit(exitCode)
 }

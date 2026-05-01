@@ -178,6 +178,15 @@ The user confirmed or selected a value (Yes, OK, Continue).
 .TP
 .B 1
 The user cancelled (No, Cancel, ESC).
+.TP
+.B 130
+Interrupted by
+.BR Ctrl+C .
+This uses
+.B SIGINT
+process-group semantics to match
+.BR dialog (1)
+behavior in wrapper applications.
 .SH ENVIRONMENT
 .TP
 .B SUSEDIALOG_DEBUG_KEYS
