@@ -15,7 +15,7 @@
 ||   Targets: opensuse-migration-tool, jeos-firstboot         ||
 +==============================================================+
 ```
-<img width="400" height="158" alt="examples" src="https://raw.githubusercontent.com/openSUSE/susedialog/main/examples.gif" />
+<img width="400" alt="examples" src="https://raw.githubusercontent.com/openSUSE/susedialog/main/examples.gif" />
 
 `susedialog` is an openSUSE-focused, Bubble Tea-based compatibility shim for a small subset of `dialog`.
 
