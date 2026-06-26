@@ -24,6 +24,13 @@ It is intentionally narrow: the initial target is openSUSE system tooling that c
 - `opensuse-migration-tool`
 - `jeos-firstboot`
 
+
+jeos-firstboot susedialog (left) vs dialog (right)
+<img width="1000" alt="jeosfirstboot-comparision" src="https://github.com/user-attachments/assets/4a4b68b6-5ed8-4c63-a20c-3b7521b299c6" />
+
+
+
+
 ## Supported widgets
 
 - `--msgbox`
